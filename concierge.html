@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        :root {
+            --bg:#0f172a;--panel:#020617;--text:#e5e7eb;
+            --muted:#94a3b8;--accent:#3b82f6;--secondary:#003175;--disabled:#475569;--border:#1e293b;
+            --danger:#ef4444;
+        }
+        body{background:var(--bg);color:var(--text);font-family:system-ui;margin:0;padding:1rem}
+        .container{max-width:420px;margin:auto;background:var(--panel);border-radius:14px;padding:1rem}
+        h1{text-align:center}
+        input,select,button{width:100%;padding:.7rem;margin-top:.5rem;border-radius:10px;border:1px solid var(--border);background:#020617;color:var(--text)}
+        button{background:var(--accent);border:none;cursor:pointer}
+        button:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
+        button.secondary:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
+        button.secondary{background:var(--secondary)}
+        button.danger{background:var(--danger)}
+        button.danger:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
+        ul{list-style:none;padding:0}
+        li{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:.6rem 0}
+        .status{font-size:1.4rem}
+        .seen{font-size:.75rem;color:var(--muted);margin-left:2rem}
+        .host-row {
+            cursor: pointer;
+            padding: .7rem .4rem;
+            border-radius: 8px;
+        }
+        .host-row.selected {
+            background: rgba(59,130,246,0.18);
+        }
+        .host-row:active {
+            background: rgba(59,130,246,0.28);
+        }
+    </style>
+    <title>Concierge</title>
+</head>
+
+<body>
+<div class="container">
+    <h1>Concierge</h1>
+
+    <input id="key" style="width:92%" type="password" placeholder="API key">
+
+    <ul>
+        {HOST_OPTIONS}
+    </ul>
+
+    <button onclick="send('wakeup')">Wake up</button>
+    <button class="secondary" onclick="updateStatus()">Update status</button>
+
+    <select id="command">
+        {COMMAND_OPTIONS}
+    </select>
+    <button class="secondary" onclick="sendCommand()">Run command</button>
+
+    <button id="refreshBtn" class="secondary" onclick="refreshLastTask()" disabled>Refresh last task</button>
+    <button id="abortBtn" class="danger" onclick="abortLastTask()" disabled>Abort last task</button>
+</div>
+
+<script>
+    const STATUS={unknown:"❓",waking:"🟡",online:"🟢",offline:"🔴",waiting:"⏳",running:"🏃",success:"✅",error:"❌",dropped:"🚫"};
+    let lastTaskId = null;
+
+    document.querySelectorAll(".host-row").forEach(row => {
+        row.onclick = () => row.classList.toggle("selected");
+    });
+
+    function selectedHosts() {
+        return [...document.querySelectorAll(".host-row.selected")]
+            .map(r => r.dataset.host);
+    }
+
+    function setStatus(h,s){
+        const el = document.getElementById("status-"+h);
+        if(el) el.textContent=STATUS[s];
+    }
+
+    function setSeen(h){
+        const el = document.getElementById("seen-"+h);
+        if(el) el.textContent="last success: "+new Date().toLocaleTimeString();
+    }
+
+    function updateTaskButtons() {
+        const refreshBtn = document.getElementById("refreshBtn");
+        const abortBtn = document.getElementById("abortBtn");
+        if(lastTaskId) {
+            refreshBtn.disabled = false;
+            abortBtn.disabled = false;
+        } else {
+            refreshBtn.disabled = true;
+            abortBtn.disabled = true;
+        }
+    }
+
+    function send(action) {
+        const hosts = selectedHosts();
+        if(hosts.length === 0) {
+            alert("Please select at least one host");
+            return;
+        }
+        hosts.forEach(h=>setStatus(h,"waiting"));
+        sendHosts(action, hosts);
+    }
+
+    function sendHosts(action, hosts){
+        fetch("/concierge/api/v1/" + action, {
+            method: "POST",
+            headers: {"X-API-Key": key.value, "Content-Type": "application/json"},
+            body: JSON.stringify({hostnames: hosts})
+        }).then(r => {
+            if (r.status === 401 || r.status === 403 || r.status >= 500) {
+                const e = new Error("Request failed");
+                e.response = r;
+                throw e;
+            }
+            return r.json();
+        }).then(res => {
+            lastTaskId = res.task_id || lastTaskId;
+            updateTaskButtons();
+            updateStatusFromTask(res, action);
+        }).catch(e => {
+            if (e?.response) {
+                errorHandler(e.response, hosts);
+            } else {
+                hosts.forEach(h => setStatus(h, "unknown"));
+                console.error(e);
+            }
+        });
+    }
+
+    function updateStatusFromTask(res, action) {
+        (res.success || []).forEach(h => {
+            if(action === "wakeup") {
+                setStatus(h.hostname, "waking");
+            } else if(action === "commands/status") {
+                setStatus(h.hostname, "online");
+                setSeen(h.hostname);
+            } else {
+                setStatus(h.hostname, "success");
+                setSeen(h.hostname);
+            }
+        });
+
+        (res.running || []).forEach(h => {
+            setStatus(h.hostname, "running");
+        });
+
+        (res.errors || []).forEach(e => {
+            if (e.hasOwnProperty("hostname")) {
+                if(action === "commands/status") {
+                    setStatus(e.hostname, "offline");
+                } else {
+                    setStatus(e.hostname, "error");
+                }
+            }
+        });
+    }
+
+    async function errorHandler(r, hosts) {
+        if (r.status >= 400 && r.status < 500) {
+            hosts.forEach(h => setStatus(h, "dropped"));
+        } else {
+            hosts.forEach(h => setStatus(h, "unknown"));
+        }
+        const res = await r.json();
+        alert(JSON.stringify(res, null, 2));
+    }
+
+    function sendCommand(){
+        const c=document.getElementById("command").value;
+        send(`commands/${c}`);
+    }
+
+    function updateStatus(){
+        const hosts = selectedHosts();
+        if(hosts.length === 0) {
+            alert("Please select at least one host");
+            return;
+        }
+        hosts.forEach(h=>{
+            setStatus(h,"waiting");
+            sendHosts(`commands/status`, [h]);
+        });
+    }
+
+    function refreshLastTask() {
+        if(!lastTaskId) return;
+
+        fetch(`/concierge/api/v1/tasks/${lastTaskId}`, {
+            method: "GET",
+            headers: {"X-API-Key": key.value}
+        }).then(r => {
+            if (!r.ok) throw new Error("Failed to fetch task");
+            return r.json();
+        }).then(task => {
+            const action = task.command ? `commands/${task.command}` : "wakeup";
+            updateStatusFromTask(task, action);
+
+            if(task.running && task.running.length === 0) {
+                alert(`Task completed\nSuccess: ${task.success.length}\nErrors: ${task.errors.length}`);
+            } else {
+                alert(`Task still running\nCompleted: ${task.success.length}\nRunning: ${task.running.length}\nErrors: ${task.errors.length}`);
+            }
+        }).catch(e => {
+            alert("Failed to refresh task: " + e.message);
+            console.error(e);
+        });
+    }
+
+    function abortLastTask() {
+        if(!lastTaskId) return;
+
+        if(!confirm("Abort the last task? This will terminate all running processes.")) {
+            return;
+        }
+
+        fetch(`/concierge/api/v1/tasks/${lastTaskId}/abort`, {
+            method: "PUT",
+            headers: {"X-API-Key": key.value}
+        }).then(r => {
+            if (!r.ok) throw new Error("Failed to abort task");
+            return r.json();
+        }).then(res => {
+            alert(`Task abort initiated\nProcesses terminated: ${res.aborted_processes}`);
+            setTimeout(() => refreshLastTask(), 1000);
+        }).catch(e => {
+            alert("Failed to abort task: " + e.message);
+            console.error(e);
+        });
+    }
+
+    updateTaskButtons();
+</script>
+</body>
+</html>

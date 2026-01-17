@@ -1,0 +1,3 @@
+ssh "$CONCIERGE_SERVER" "kill -9 \"\$(ps -C 'python3 concierge-acpi.py' -o pid=)\""
+scp concierge_config.json concierge-acpi_swagger-openapi-spec.yml concierge.html concierge-acpi.py "$CONCIERGE_SERVER":~/
+ssh "$CONCIERGE_SERVER" "CONCIERGE_API_KEY=$CONCIERGE_API_KEY CONCIERGE_CONFIG_FILE_PATH=concierge_config.json CONCIERGE_API_SPEC_FILE_PATH=concierge-acpi_swagger-openapi-spec.yml CONCIERGE_TASKS_FILE_PATH=concierge_tasks CONCIERGE_MAX_TASKS=100 CONCIERGE_LOG_LEVEL=DEBUG python3 concierge-acpi.py" &

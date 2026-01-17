@@ -1,0 +1,368 @@
+openapi: 3.0.3
+info:
+  title: Concierge API
+  description: API for managing Wake-on-LAN and remote command execution
+  version: 1.0.0
+
+servers:
+  - url: https://localhost:8443/concierge/api/v1
+    description: Local HTTPS server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /wakeup:
+    post:
+      summary: Send Wake-on-LAN to multiple hosts
+      description: Broadcasts WoL magic packets to wake up specified hosts
+      operationId: wakeupMultipleHosts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - hostnames
+              properties:
+                hostnames:
+                  type: array
+                  items:
+                    type: string
+                  example: ["workstation", "server"]
+      responses:
+        '200':
+          description: Wakeup packets sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Host not allowed or MAC not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wakeup/{hostname}:
+    post:
+      summary: Send Wake-on-LAN to a single host
+      description: Broadcasts a WoL magic packet to wake up a specific host
+      operationId: wakeupSingleHost
+      parameters:
+        - name: hostname
+          in: path
+          required: true
+          schema:
+            type: string
+          example: workstation
+      responses:
+        '200':
+          description: Wakeup packet sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Host not allowed or MAC not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /commands/{command}:
+    post:
+      summary: Execute command on multiple hosts
+      description: Executes a configured shell command on specified hosts
+      operationId: executeCommandMultipleHosts
+      parameters:
+        - name: command
+          in: path
+          required: true
+          schema:
+            type: string
+          example: status
+          description: Name of the command to execute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - hostnames
+              properties:
+                hostnames:
+                  type: array
+                  items:
+                    type: string
+                  example: ["workstation", "server"]
+      responses:
+        '200':
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Bad request or command execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Command not allowed or invalid command definition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /commands/{command}/{hostname}:
+    post:
+      summary: Execute command on a single host
+      description: Executes a configured shell command on a specific host
+      operationId: executeCommandSingleHost
+      parameters:
+        - name: command
+          in: path
+          required: true
+          schema:
+            type: string
+          example: status
+          description: Name of the command to execute
+        - name: hostname
+          in: path
+          required: true
+          schema:
+            type: string
+          example: workstation
+      responses:
+        '200':
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Bad request or command execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Command not allowed or invalid command definition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks:
+    get:
+      summary: List all tasks
+      description: Returns a list of all tasks in reverse chronological order (newest first)
+      operationId: listTasks
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /tasks/{taskId}:
+    get:
+      summary: Get task details
+      description: Returns detailed information about a specific task
+      operationId: getTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 6730bd0d-3b67-42df-ae8c-3d2a1bae2f73
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{taskId}/abort:
+    put:
+      summary: Abort a task
+      description: Terminates all running processes associated with a task
+      operationId: abortTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 6730bd0d-3b67-42df-ae8c-3d2a1bae2f73
+      responses:
+        '200':
+          description: Task abort initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  aborted_processes:
+                    type: integer
+                    description: Number of processes terminated
+                  message:
+                    type: string
+                example:
+                  task_id: 6730bd0d-3b67-42df-ae8c-3d2a1bae2f73
+                  aborted_processes: 2
+                  message: Task abort initiated
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    TaskResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the task
+        start_timestamp:
+          type: integer
+          format: int64
+          description: Task start time in milliseconds since epoch
+        end_timestamp:
+          type: integer
+          format: int64
+          description: Task end time in milliseconds since epoch
+        command:
+          type: string
+          nullable: true
+          description: Name of the executed command (null for wakeup)
+        success:
+          type: array
+          items:
+            type: object
+            properties:
+              hostname:
+                type: string
+          description: List of hosts where the operation succeeded
+        running:
+          type: array
+          items:
+            type: object
+            properties:
+              hostname:
+                type: string
+          description: List of hosts where the operation is still running
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              hostname:
+                type: string
+              error:
+                type: string
+          description: List of hosts where the operation failed with error details
+      example:
+        task_id: 6730bd0d-3b67-42df-ae8c-3d2a1bae2f73
+        start_timestamp: 1705507200000
+        end_timestamp: 1705507205000
+        command: status
+        success:
+          - hostname: workstation
+        running: []
+        errors:
+          - hostname: server
+            error: Process exited with code 1
+
+    Task:
+      allOf:
+        - $ref: '#/components/schemas/TaskResponse'
+
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              hostname:
+                type: string
+              error:
+                type: string
+            required:
+              - error
+      example:
+        errors:
+          - error: Invalid or missing credentials
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed - invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+              - error: Invalid or missing credentials
+
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
