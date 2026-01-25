@@ -1,0 +1,300 @@
+{
+  "$id": "https://concierge.example.com/config.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Concierge Configuration",
+  "description": "Configuration schema for Concierge server",
+  "type": "object",
+  "properties": {
+    "hosts": {
+      "type": "array",
+      "description": "Array of host configurations",
+      "items": {
+        "$ref": "#/definitions/Host"
+      }
+    },
+    "execution_plans": {
+      "type": "array",
+      "description": "Array of execution plan definitions",
+      "items": {
+        "$ref": "#/definitions/ExecutionPlan"
+      }
+    }
+  },
+  "required": ["hosts"],
+  "definitions": {
+    "Host": {
+      "type": "object",
+      "description": "Configuration for a single host",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "description": "Unique identifier for the host",
+          "minLength": 1
+        },
+        "mac": {
+          "type": "string",
+          "description": "MAC address for Wake-on-LAN (format: XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX)",
+          "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+        },
+        "commands": {
+          "type": "array",
+          "description": "Available commands for this host",
+          "items": {
+            "oneOf": [
+              {"$ref": "#/definitions/ShellCommand"},
+              {"$ref": "#/definitions/HTTPCommand"}
+            ]
+          }
+        }
+      },
+      "required": ["hostname"]
+    },
+    "ShellCommand": {
+      "type": "object",
+      "description": "Shell command configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for the command",
+          "minLength": 1
+        },
+        "type": {
+          "const": "shell",
+          "description": "Command type"
+        },
+        "command": {
+          "type": "string",
+          "description": "Path to the executable",
+          "minLength": 1
+        },
+        "arguments": {
+          "type": "array",
+          "description": "Command arguments (supports placeholders: <hostname>, <param_name>)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Synchronous execution timeout in seconds (0 = no timeout)",
+          "minimum": 0
+        },
+        "async_timeout": {
+          "type": "integer",
+          "description": "Asynchronous execution timeout in seconds (-1 = no timeout)",
+          "minimum": -1
+        },
+        "socket_raw_mode": {
+          "type": "string",
+          "description": "WebSocket streaming mode",
+          "enum": ["disabled", "cli", "jpeg_stream"],
+          "default": "disabled"
+        },
+        "socket_raw_stdin": {
+          "type": "boolean",
+          "description": "Enable stdin input via WebSocket",
+          "default": false
+        }
+      },
+      "required": ["name", "type", "command"],
+      "oneOf": [
+        {"required": ["timeout"]},
+        {"required": ["async_timeout"]}
+      ]
+    },
+    "HTTPCommand": {
+      "type": "object",
+      "description": "HTTP request command configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for the command",
+          "minLength": 1
+        },
+        "type": {
+          "const": "http",
+          "description": "Command type"
+        },
+        "url": {
+          "type": "string",
+          "description": "Full URL (supports placeholders: <hostname>, <param_name>)",
+          "format": "uri",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP method",
+          "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+          "default": "GET"
+        },
+        "headers": {
+          "type": "array",
+          "description": "HTTP headers",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string",
+                "description": "Supports placeholders"
+              }
+            },
+            "required": ["key", "value"]
+          }
+        },
+        "query_params": {
+          "type": "object",
+          "description": "Query parameters (supports placeholders)",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "path_params": {
+          "type": "object",
+          "description": "Path parameters for URL replacement (supports placeholders)",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "payload": {
+          "type": "string",
+          "description": "Request body"
+        },
+        "payload_base64_encoded": {
+          "type": "boolean",
+          "description": "Whether payload is base64 encoded",
+          "default": false
+        },
+        "payload_placeholder_replacement": {
+          "type": "string",
+          "description": "Placeholder replacement mode for payload",
+          "enum": ["disabled", "json_only", "very_unsafe"],
+          "default": "disabled"
+        },
+        "skip_cert_validation": {
+          "type": "boolean",
+          "description": "Skip SSL certificate validation",
+          "default": false
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Synchronous request timeout in seconds",
+          "minimum": 0
+        },
+        "async_timeout": {
+          "type": "integer",
+          "description": "Asynchronous request timeout in seconds (-1 = no timeout)",
+          "minimum": -1
+        }
+      },
+      "required": ["name", "type", "url"],
+      "oneOf": [
+        {"required": ["timeout"]},
+        {"required": ["async_timeout"]}
+      ],
+      "not": {
+        "allOf": [
+          {
+            "properties": {
+              "payload_base64_encoded": {"const": true}
+            }
+          },
+          {
+            "properties": {
+              "payload_placeholder_replacement": {
+                "enum": ["json_only", "very_unsafe"]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "ExecutionPlan": {
+      "type": "object",
+      "description": "Execution plan with multiple tasks",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for the execution plan",
+          "minLength": 1
+        },
+        "referenced_plans": {
+          "type": "array",
+          "description": "Other execution plans to run (by default, before tasks)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "description": "Tasks to execute in this plan",
+          "items": {
+            "$ref": "#/definitions/PlanTask"
+          }
+        }
+      },
+      "required": ["name", "tasks"]
+    },
+    "PlanTask": {
+      "type": "object",
+      "description": "A task within an execution plan",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command name or execution plan name to execute",
+          "minLength": 1
+        },
+        "hostnames": {
+          "type": "array",
+          "description": "Target hostnames for this task",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "params": {
+          "type": "object",
+          "description": "Parameters to pass to the command",
+          "additionalProperties": true
+        },
+        "execute_after": {
+          "type": ["string", "integer"],
+          "description": "Task index to wait for before executing"
+        },
+        "execute_before": {
+          "type": ["string", "integer"],
+          "description": "Task index that should wait for this task"
+        },
+        "execute_at_position": {
+          "type": "integer",
+          "description": "Position in execution sequence (for interleaving with referenced plans)",
+          "minimum": 0
+        },
+        "if_previous_command": {
+          "type": ["string", "integer"],
+          "description": "Task index to check condition against"
+        },
+        "if_previous_command_result": {
+          "type": "string",
+          "description": "Required result of previous command",
+          "enum": ["all_success", "any_success", "all_error", "any_error"]
+        },
+        "if_previous_output_contains": {
+          "type": "string",
+          "description": "String that must be present in previous command output"
+        },
+        "on_success_jump_to": {
+          "type": ["string", "integer"],
+          "description": "Task index to jump to if this task succeeds"
+        },
+        "on_error_jump_to": {
+          "type": ["string", "integer"],
+          "description": "Task index to jump to if this task fails"
+        }
+      },
+      "required": ["command", "hostnames"]
+    }
+  }
+}

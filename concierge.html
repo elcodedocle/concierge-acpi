@@ -5,34 +5,467 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
         :root {
-            --bg:#0f172a;--panel:#020617;--text:#e5e7eb;
-            --muted:#94a3b8;--accent:#3b82f6;--secondary:#003175;--disabled:#475569;--border:#1e293b;
-            --danger:#ef4444;
+            --bg: #0f172a;
+            --panel: #020617;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #3b82f6;
+            --secondary: #003175;
+            --disabled: #475569;
+            --border: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
         }
-        body{background:var(--bg);color:var(--text);font-family:system-ui;margin:0;padding:1rem}
-        .container{max-width:420px;margin:auto;background:var(--panel);border-radius:14px;padding:1rem}
-        h1{text-align:center}
-        input,select,button{width:100%;padding:.7rem;margin-top:.5rem;border-radius:10px;border:1px solid var(--border);background:#020617;color:var(--text)}
-        button{background:var(--accent);border:none;cursor:pointer}
-        button:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
-        button.secondary:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
-        button.secondary{background:var(--secondary)}
-        button.danger{background:var(--danger)}
-        button.danger:disabled{background:var(--disabled);opacity:0.5;cursor:not-allowed}
-        ul{list-style:none;padding:0}
-        li{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:.6rem 0}
-        .status{font-size:1.4rem}
-        .seen{font-size:.75rem;color:var(--muted);margin-left:2rem}
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui;
+            margin: 0;
+            padding: 1rem
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: var(--panel);
+            border-radius: 14px;
+            padding: 1rem
+        }
+
+        h1, h2 {
+            text-align: center
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            color: var(--muted)
+        }
+
+        input, select, button, textarea {
+            width: 100%;
+            padding: .7rem;
+            margin-top: .5rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #020617;
+            color: var(--text);
+            box-sizing: border-box
+        }
+
+        textarea {
+            font-family: monospace;
+            font-size: .85rem;
+            resize: vertical;
+            min-height: 150px
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            cursor: pointer
+        }
+
+        button:disabled {
+            background: var(--disabled);
+            opacity: 0.5;
+            cursor: not-allowed
+        }
+
+        button.secondary {
+            background: var(--secondary)
+        }
+
+        button.danger {
+            background: var(--danger)
+        }
+
+        ul {
+            list-style: none;
+            padding: 0
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding: .6rem 0
+        }
+
+        .status {
+            font-size: 1.4rem
+        }
+
+        .seen {
+            font-size: .75rem;
+            color: var(--muted);
+            margin-left: 2rem
+        }
+
         .host-row {
             cursor: pointer;
             padding: .7rem .4rem;
-            border-radius: 8px;
+            border-radius: 8px
         }
+
         .host-row.selected {
-            background: rgba(59,130,246,0.18);
+            background: rgba(59, 130, 246, 0.18)
         }
-        .host-row:active {
-            background: rgba(59,130,246,0.28);
+
+        .task-item {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: .8rem;
+            margin: .5rem 0;
+            cursor: pointer
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .task-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .task-command {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: .9rem
+        }
+
+        .task-meta {
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: .2rem
+        }
+
+        .task-hosts {
+            font-size: .75rem;
+            color: var(--text);
+            margin-top: .2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .task-actions {
+            display: flex;
+            gap: .5rem;
+            align-items: center
+        }
+
+        .task-status-icon {
+            font-size: 1.2rem
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: .3rem;
+            font-size: 1.1rem;
+            width: auto;
+            margin: 0
+        }
+
+        .action-btn:hover {
+            opacity: 0.7
+        }
+
+        .task-details {
+            margin-top: .8rem;
+            padding-top: .8rem;
+            border-top: 1px solid var(--border);
+            display: none
+        }
+
+        .task-details.expanded {
+            display: block
+        }
+
+        .detail-section {
+            margin: .5rem 0
+        }
+
+        .detail-label {
+            font-size: .75rem;
+            color: var(--muted);
+            font-weight: bold;
+            margin-bottom: .3rem
+        }
+
+        .detail-content {
+            font-size: .85rem;
+            background: #020617;
+            padding: .5rem;
+            border-radius: 6px;
+            overflow-x: auto
+        }
+
+        .host-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem
+        }
+
+        .host-badge {
+            background: #334155;
+            padding: .3rem .6rem;
+            border-radius: 6px;
+            font-size: .75rem;
+            cursor: pointer
+        }
+
+        .host-badge.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success)
+        }
+
+        .host-badge.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger)
+        }
+
+        .host-badge.running {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent)
+        }
+
+        .host-badge.selected {
+            border: 2px solid var(--accent)
+        }
+
+        .result-output {
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: .8rem
+        }
+
+        .params-section {
+            margin-top: .5rem
+        }
+
+        .param-input {
+            display: flex;
+            gap: .5rem;
+            margin: .3rem 0
+        }
+
+        .param-input input {
+            margin: 0
+        }
+
+        .param-input input:last-child {
+            flex: 2
+        }
+
+        .stream-container {
+            margin-top: 1rem;
+            display: none
+        }
+
+        .stream-container.active {
+            display: block
+        }
+
+        .stream-terminal {
+            background: #000;
+            color: #0f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: .85rem;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            outline: none;
+            cursor: text;
+            position: relative
+        }
+
+        .stream-terminal:focus {
+            box-shadow: 0 0 0 2px var(--accent)
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: #0f0;
+            animation: blink 1s step-end infinite;
+            position: absolute;
+            pointer-events: none
+        }
+
+        @keyframes blink {
+            0%, 49% {
+                opacity: 1
+            }
+            50%, 100% {
+                opacity: 0
+            }
+        }
+
+        .terminal-content {
+            display: inline;
+            white-space: pre-wrap;
+            word-wrap: break-word
+        }
+
+        .stream-controls {
+            display: flex;
+            gap: .5rem;
+            margin-top: .5rem;
+            align-items: center
+        }
+
+        .modifier-btn {
+            background: var(--secondary);
+            padding: .5rem .8rem;
+            border-radius: 6px;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            font-size: .75rem;
+            font-weight: bold;
+            min-width: 60px
+        }
+
+        .modifier-btn:hover {
+            opacity: 0.8
+        }
+
+        .modifier-btn:active {
+            opacity: 0.6
+        }
+
+        .modifier-btn.active {
+            background: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5)
+        }
+
+        .echo-checkbox {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .85rem;
+            color: var(--muted);
+            margin-left: auto
+        }
+
+        .echo-checkbox input {
+            width: auto;
+            margin: 0
+        }
+
+        .toggle-switch {
+            margin-right: 1em;
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0
+        }
+
+        .toggle-slider {
+            width: inherit;
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--disabled);
+            border-radius: 24px;
+            transition: .3s
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .3s
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--accent)
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px)
+        }
+
+        .param-input button {
+            background: var(--danger);
+            width: auto;
+            padding: .5rem;
+            margin: 0;
+            min-width: auto
+        }
+
+        .param-input button:hover {
+            opacity: 0.8
+        }
+
+        .stream-status {
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: .5rem
+        }
+
+        .stream-status.connected {
+            color: var(--success)
+        }
+
+        .stream-status.error {
+            color: var(--danger)
+        }
+
+        .media-viewer {
+            background: #000;
+            border-radius: 6px;
+            padding: 0;
+            min-height: 300px;
+            max-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            width: 100%
+        }
+
+        .media-viewer img {
+            max-width: 100%;
+            max-height: 500px;
+            height: auto;
+            width: auto;
+            border-radius: 4px;
+            display: block;
+            object-fit: contain
+        }
+
+        .media-viewer video {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 4px
         }
     </style>
     <title>Concierge</title>
@@ -42,7 +475,7 @@
 <div class="container">
     <h1>Concierge</h1>
 
-    <input id="key" style="width:92%" type="password" placeholder="API key">
+    <input id="key" type="password" placeholder="API key">
 
     <ul>
         {HOST_OPTIONS}
@@ -54,62 +487,164 @@
     <select id="command">
         {COMMAND_OPTIONS}
     </select>
+
+    <div id="paramsContainer"></div>
+
     <button class="secondary" onclick="sendCommand()">Run command</button>
 
-    <button id="refreshBtn" class="secondary" onclick="refreshLastTask()" disabled>Refresh last task</button>
-    <button id="abortBtn" class="danger" onclick="abortLastTask()" disabled>Abort last task</button>
+    <!-- Stream Container -->
+    <div id="streamContainer" class="stream-container">
+        <h2>Process Stream</h2>
+        <div class="detail-label">Task: <span id="streamTaskId"></span> | Host: <span id="streamHostname"></span></div>
+
+        <!-- CLI Mode -->
+        <div id="cliMode" style="display:none">
+            <div id="terminal" class="stream-terminal" tabindex="0" onkeydown="handleTerminalKeydown(event)"
+                 onpaste="handleTerminalPaste(event)"></div>
+            <div class="stream-controls">
+                <button class="modifier-btn" id="ctrlBtn" onclick="toggleModifier('ctrl')"
+                        title="Next char will be Ctrl+key">CTRL
+                </button>
+                <button class="modifier-btn" id="altBtn" onclick="toggleModifier('alt')"
+                        title="Next char will be Alt+key">ALT
+                </button>
+                <button class="modifier-btn" id="escBtn" onclick="processEscModifier()" title="Send Escape">ESC</button>
+                <button class="danger" onclick="disconnectStream()">Disconnect</button>
+                <label class="echo-checkbox">
+                    <span style="margin-left:1em;margin-right:-1em">Local Echo</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="localEchoCheckbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+            </div>
+        </div>
+
+        <!-- Stream Mode -->
+        <div id="streamMode" style="display:none">
+            <div id="mediaViewer" class="media-viewer">
+                <span style="color:var(--muted)">Waiting for stream...</span>
+            </div>
+            <button class="danger" onclick="disconnectStream()" style="margin-top:.5rem">Disconnect</button>
+        </div>
+
+        <div id="streamStatus" class="stream-status">Disconnected</div>
+    </div>
+
+    <h2>Task History</h2>
+    <div id="taskHistory"></div>
 </div>
 
 <script>
-    const STATUS={unknown:"❓",waking:"🟡",online:"🟢",offline:"🔴",waiting:"⏳",running:"🏃",success:"✅",error:"❌",dropped:"🚫"};
+    const STATUS = {
+        unknown: "❓",
+        waking: "🟡",
+        online: "🟢",
+        offline: "🔴",
+        waiting: "⏳",
+        running: "🏃",
+        success: "✅",
+        error: "❌",
+        dropped: "🚫"
+    };
     let lastTaskId = null;
+    let expandedTasks = new Set();
+    let selectedStreamHost = null;
+    let ws = null;
+    let nextCharModifier = null; // 'ctrl' or 'alt' for next character
+    let streamFrameBuffer = new Uint8Array(0); // Buffer for accumulating stream frames
+    let currentStreamImg = null; // Current displayed image element
+    let streamViewerInitialized = false;
+
+    // Terminal cursor state
+    let terminalBuffer = ''; // Current terminal content
+    let cursorPosition = 0; // Cursor position in buffer
+    let insertMode = false; // Insert vs overwrite mode
+
+    const allCommandOptions = Array.from(document.getElementById("command").options);
 
     document.querySelectorAll(".host-row").forEach(row => {
-        row.onclick = () => row.classList.toggle("selected");
+        row.onclick = () => {
+            row.classList.toggle("selected");
+            updateCommandList();
+            loadTaskHistory();
+        };
     });
+
+    function updateCommandList() {
+        const hosts = selectedHosts();
+        const commandSelect = document.getElementById('command');
+
+        if (hosts.length === 0) {
+            // No hosts selected - show all commands
+            commandSelect.innerHTML = allCommandOptions
+                .map(opt => `<option value="${opt.value}">${opt.text}</option>`)
+                .join('');
+            return;
+        }
+
+        // Get available commands for selected hosts
+        const availableCommands = new Set();
+
+        hosts.forEach(hostname => {
+            // Find host in original options
+            const hostRow = document.querySelector(`.host-row[data-host="${hostname}"]`);
+            if (hostRow && hostRow.dataset.commands) {
+                const hostCommands = JSON.parse(hostRow.dataset.commands);
+                hostCommands.forEach(cmd => availableCommands.add(cmd));
+            }
+        });
+
+        // Filter command list to only show available commands
+        const allOptions = allCommandOptions.map(opt => ({
+            value: opt.value,
+            text: opt.text
+        }));
+
+        const filteredOptions = allOptions.filter(opt => availableCommands.has(opt.value));
+
+        if (filteredOptions.length === 0) {
+            commandSelect.innerHTML = '<option value="">No common commands available</option>';
+        } else {
+            commandSelect.innerHTML = filteredOptions
+                .map(opt => `<option value="${opt.value}">${opt.text}</option>`)
+                .join('');
+        }
+    }
 
     function selectedHosts() {
         return [...document.querySelectorAll(".host-row.selected")]
             .map(r => r.dataset.host);
     }
 
-    function setStatus(h,s){
-        const el = document.getElementById("status-"+h);
-        if(el) el.textContent=STATUS[s];
+    function setStatus(h, s) {
+        const el = document.getElementById("status-" + h);
+        if (el) el.textContent = STATUS[s];
     }
 
-    function setSeen(h){
-        const el = document.getElementById("seen-"+h);
-        if(el) el.textContent="last success: "+new Date().toLocaleTimeString();
+    function setSeen(h) {
+        const el = document.getElementById("seen-" + h);
+        if (el) el.textContent = "last success: " + new Date().toLocaleTimeString();
     }
 
-    function updateTaskButtons() {
-        const refreshBtn = document.getElementById("refreshBtn");
-        const abortBtn = document.getElementById("abortBtn");
-        if(lastTaskId) {
-            refreshBtn.disabled = false;
-            abortBtn.disabled = false;
-        } else {
-            refreshBtn.disabled = true;
-            abortBtn.disabled = true;
-        }
-    }
-
-    function send(action) {
+    function send(action, params = null) {
         const hosts = selectedHosts();
-        if(hosts.length === 0) {
+        if (hosts.length === 0) {
             alert("Please select at least one host");
             return;
         }
-        hosts.forEach(h=>setStatus(h,"waiting"));
-        sendHosts(action, hosts);
+        hosts.forEach(h => setStatus(h, "waiting"));
+        sendHosts(action, hosts, params);
     }
 
-    function sendHosts(action, hosts){
+    function sendHosts(action, hosts, params = null) {
+        const body = {hostnames: hosts};
+        if (params) body.params = params;
+
         fetch("/concierge/api/v1/" + action, {
             method: "POST",
             headers: {"X-API-Key": key.value, "Content-Type": "application/json"},
-            body: JSON.stringify({hostnames: hosts})
+            body: JSON.stringify(body)
         }).then(r => {
             if (r.status === 401 || r.status === 403 || r.status >= 500) {
                 const e = new Error("Request failed");
@@ -118,9 +653,9 @@
             }
             return r.json();
         }).then(res => {
-            lastTaskId = res.task_id || lastTaskId;
-            updateTaskButtons();
+            lastTaskId = res['task_id'] || lastTaskId;
             updateStatusFromTask(res, action);
+            loadTaskHistory();
         }).catch(e => {
             if (e?.response) {
                 errorHandler(e.response, hosts);
@@ -133,9 +668,9 @@
 
     function updateStatusFromTask(res, action) {
         (res.success || []).forEach(h => {
-            if(action === "wakeup") {
+            if (action === "wakeup") {
                 setStatus(h.hostname, "waking");
-            } else if(action === "commands/status") {
+            } else if (action === "commands/status") {
                 setStatus(h.hostname, "online");
                 setSeen(h.hostname);
             } else {
@@ -150,7 +685,7 @@
 
         (res.errors || []).forEach(e => {
             if (e.hasOwnProperty("hostname")) {
-                if(action === "commands/status") {
+                if (action === "commands/status") {
                     setStatus(e.hostname, "offline");
                 } else {
                     setStatus(e.hostname, "error");
@@ -169,70 +704,969 @@
         alert(JSON.stringify(res, null, 2));
     }
 
-    function sendCommand(){
-        const c=document.getElementById("command").value;
-        send(`commands/${c}`);
+    function sendCommand() {
+        const c = document.getElementById("command").value;
+        const params = getCommandParams();
+        send(`commands/${c}`, params);
     }
 
-    function updateStatus(){
+    function updateStatus() {
         const hosts = selectedHosts();
-        if(hosts.length === 0) {
+        if (hosts.length === 0) {
             alert("Please select at least one host");
             return;
         }
-        hosts.forEach(h=>{
-            setStatus(h,"waiting");
+        hosts.forEach(h => {
+            setStatus(h, "waiting");
             sendHosts(`commands/status`, [h]);
         });
     }
 
-    function refreshLastTask() {
-        if(!lastTaskId) return;
-
-        fetch(`/concierge/api/v1/tasks/${lastTaskId}`, {
+    function refreshTask(taskId, showAlert = false) {
+        fetch(`/concierge/api/v1/tasks/${taskId}`, {
             method: "GET",
             headers: {"X-API-Key": key.value}
         }).then(r => {
             if (!r.ok) throw new Error("Failed to fetch task");
             return r.json();
         }).then(task => {
-            const action = task.command ? `commands/${task.command}` : "wakeup";
+            const action = task['command'] ? `commands/${task['command']}` : "wakeup";
             updateStatusFromTask(task, action);
+            loadTaskHistory();
 
-            if(task.running && task.running.length === 0) {
-                alert(`Task completed\nSuccess: ${task.success.length}\nErrors: ${task.errors.length}`);
-            } else {
-                alert(`Task still running\nCompleted: ${task.success.length}\nRunning: ${task.running.length}\nErrors: ${task.errors.length}`);
+            if (showAlert) {
+                if (task.running && task.running.length === 0) {
+                    alert(`Task completed\nSuccess: ${task.success.length}\nErrors: ${task.errors.length}`);
+                } else {
+                    alert(`Task still running\nCompleted: ${task.success.length}\nRunning: ${task.running.length}\nErrors: ${task.errors.length}`);
+                }
             }
         }).catch(e => {
-            alert("Failed to refresh task: " + e.message);
+            if (showAlert) {
+                alert("Failed to refresh task: " + e.message);
+            }
             console.error(e);
         });
     }
 
-    function abortLastTask() {
-        if(!lastTaskId) return;
+    function loadTaskHistory() {
+        if (!key) {
+            return;
+        }
+        fetch("/concierge/api/v1/tasks", {
+            method: "GET",
+            headers: {"X-API-Key": key.value}
+        }).then(r => r.json())
+            .then(tasks => {
+                renderTaskHistory(tasks);
+            }).catch(e => {
+            console.error("Failed to load task history:", e);
+        });
+    }
 
-        if(!confirm("Abort the last task? This will terminate all running processes.")) {
+    function renderTaskHistory(tasks) {
+        const container = document.getElementById("taskHistory");
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:.85rem">No tasks retrieved. Set API key and select hosts to update.</p>';
             return;
         }
 
-        fetch(`/concierge/api/v1/tasks/${lastTaskId}/abort`, {
+        const selectedHostsSet = new Set(selectedHosts());
+        const filteredTasks = selectedHostsSet.size === 0 ? tasks : tasks.filter(task => {
+            const allHosts = [
+                ...(task.success || []).map(h => h.hostname),
+                ...(task.running || []).map(h => h.hostname),
+                ...(task.errors || []).map(h => h.hostname)
+            ];
+            return allHosts.some(h => selectedHostsSet.has(h));
+        });
+
+        if (filteredTasks.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:.85rem">No tasks for selected hosts</p>';
+            return;
+        }
+
+        container.innerHTML = filteredTasks.map(task => {
+            const isExpanded = expandedTasks.has(task['task_id']);
+            const statusIcon = getTaskStatusIcon(task);
+            const command = task['command'] || 'wakeup';
+            const startTime = new Date(task['start_timestamp']).toLocaleString();
+            const endTime = task['end_timestamp'] ? new Date(task['end_timestamp']).toLocaleString() : 'Running';
+            const isRunning = task.running && task.running.length > 0;
+
+            const allHosts = [
+                ...(task.success || []).map(h => ({...h, status: 'success'})),
+                ...(task.running || []).map(h => ({...h, status: 'running'})),
+                ...(task.errors || []).map(h => ({...h, status: 'error'}))
+            ];
+
+            const hostPreview = allHosts.slice(0, 3).map(h => h.hostname).join(', ');
+            const moreHosts = allHosts.length > 3 ? '...' : '';
+
+            const actionButtons = isRunning ? `
+                <button class="action-btn" onclick="event.stopPropagation();refreshTask('${task['task_id']}')" title="Refresh task status">🔄</button>
+                <button class="action-btn" onclick="event.stopPropagation();abortTask('${task['task_id']}')" title="Abort task">🛑</button>
+            ` : '';
+
+            return `
+                <div class="task-item">
+                    <div class="task-header" onclick="toggleTaskExpand('${task['task_id']}')">
+                        <div class="task-info">
+                            <div class="task-command">${command}</div>
+                            <div class="task-meta">Started: ${startTime}</div>
+                            <div class="task-meta">${isRunning ? 'Status' : 'Ended'}: ${endTime}</div>
+                            <div class="task-hosts">${hostPreview}${moreHosts}</div>
+                        </div>
+                        <div class="task-actions">
+                            <span class="task-status-icon">${statusIcon}</span>
+                            ${actionButtons}
+                            <button class="action-btn">${isExpanded ? '▲' : '▼'}</button>
+                        </div>
+                    </div>
+                    <div class="task-details ${isExpanded ? 'expanded' : ''}" id="details-${task['task_id']}">
+                        ${renderTaskDetails(task, allHosts)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderTaskDetails(task, allHosts) {
+        let html = '';
+
+        if (task['execution_plan']) {
+            html += '<div class="detail-section"><div class="detail-label">Execution Plan</div>';
+            html += `<div class="detail-content">${task['execution_plan']}</div></div>`;
+
+            if (task['plan_tasks']) {
+                html += '<div class="detail-section"><div class="detail-label">Plan Tasks</div>';
+                html += '<div class="detail-content"><div class="result-output">';
+                const sortedTasks = Object.keys(task['plan_tasks']).sort((a, b) => Number.parseInt(a) - Number.parseInt(b));
+                sortedTasks.forEach(taskIdx => {
+                    const planTask = task['plan_tasks'][taskIdx];
+                    const statusEmoji = {
+                        'scheduled': '📅',
+                        'waiting': '⏳',
+                        'running': '🏃',
+                        'completed': '✅',
+                        'skipped': '⏭️'
+                    }[planTask.status] || '❓';
+                    html += `Task ${taskIdx}: ${statusEmoji} ${planTask.status}\n`;
+                });
+                html += '</div></div></div>';
+            }
+        }
+
+        html += '<div class="detail-section"><div class="detail-label">Hosts (click to stream)</div><div class="host-list">';
+
+        allHosts.forEach(h => {
+            const selectedClass = selectedStreamHost?.task === task['task_id'] && selectedStreamHost?.host === h.hostname ? 'selected' : '';
+            html += `<span class="host-badge ${h.status} ${selectedClass}" onclick="selectHostForStream('${task['task_id']}', '${h.hostname}')">${h.hostname}</span>`;
+        });
+
+        html += '</div></div>';
+
+        if (task['end_timestamp']) {
+            html += '<div class="detail-section"><div class="detail-label">Full Results</div><div class="detail-content"><div class="result-output">';
+
+            if (task.success && task.success.length > 0) {
+                html += `✅ Success (${task.success.length}):\n`;
+                task.success.forEach(h => {
+                    html += `  - ${h.hostname}\n`;
+                    if (h.output) html += `    Output: ${h.output}\n`;
+                    if (h['response_code'] !== undefined) html += `    Response code: ${h['response_code']}\n`;
+                });
+                html += '\n';
+            }
+
+            if (task.errors && task.errors.length > 0) {
+                html += `❌ Errors (${task.errors.length}):\n`;
+                task.errors.forEach(e => {
+                    html += `  - ${e.hostname || 'N/A'}: ${e.error}\n`;
+                    if (e.output) html += `    Output: ${e.output}\n`;
+                    if (e['response_code'] !== undefined) html += `    Response code: ${e['response_code']}\n`;
+                });
+            }
+
+            html += '</div></div></div>';
+        }
+
+        return html;
+    }
+
+    function getTaskStatusIcon(task) {
+        const hasRunning = task.running && task.running.length > 0;
+        const hasErrors = task.errors && task.errors.length > 0;
+        const hasSuccess = task.success && task.success.length > 0;
+
+        if (hasRunning) return '🏃';
+        if (hasErrors && !hasSuccess) return '❌';
+        if (hasErrors && hasSuccess) return '⚠️';
+        return '✅';
+    }
+
+    function toggleTaskExpand(taskId) {
+        if (expandedTasks.has(taskId)) {
+            expandedTasks.delete(taskId);
+        } else {
+            expandedTasks.add(taskId);
+        }
+        loadTaskHistory();
+    }
+
+    function getCommandParams() {
+        const inputs = document.querySelectorAll('#paramsList .param-input');
+        if (inputs.length === 0) return null;
+
+        const params = {};
+        inputs.forEach(paramDiv => {
+            const inputFields = paramDiv.querySelectorAll('input');
+            const key = inputFields[0].value.trim();
+            const value = inputFields[1].value.trim();
+            if (key) params[key] = value;
+        });
+        return Object.keys(params).length > 0 ? params : null;
+    }
+
+    document.getElementById('command').addEventListener('change', updateParamsUI);
+
+    function updateParamsUI() {
+        const container = document.getElementById('paramsContainer');
+        container.innerHTML = `
+            <div class="params-section">
+                <div class="detail-label">Parameters (optional)</div>
+                <div id="paramsList">
+                    <div class="param-input">
+                        <input type="text" placeholder="Key">
+                        <input type="text" placeholder="Value">
+                        <button onclick="removeParamInput(this)"
+                        title="Remove parameter">✕</button>
+                    </div>
+                </div>
+                <button class="secondary" onclick="addParamInput()"
+                style="margin-top:.3rem;padding:.4rem">+ Add parameter</button>
+            </div>
+        `;
+    }
+
+    function addParamInput() {
+        const container = document.getElementById('paramsList');
+        const newInput = document.createElement('div');
+        newInput.className = 'param-input';
+        newInput.innerHTML = `
+            <input type="text" placeholder="Key">
+            <input type="text" placeholder="Value">
+            <button onclick="removeParamInput(this)" title="Remove parameter">✕</button>
+        `;
+        container.appendChild(newInput);
+    }
+
+    function removeParamInput(btn) {
+        const paramInput = btn.parentElement;
+        const paramsList = document.getElementById('paramsList');
+
+        // Keep at least one parameter input
+        if (paramsList.children.length > 1) {
+            paramInput.remove();
+        } else {
+            // Clear the values instead of removing
+            paramInput.querySelectorAll('input').forEach(input => input.value = '');
+        }
+    }
+
+    // WebSocket Stream Functions
+    function selectHostForStream(taskId, hostname) {
+        selectedStreamHost = {task: taskId, host: hostname};
+        loadTaskHistory(); // Refresh to show selection
+
+        // Get token and connect
+        fetch(`/concierge/api/v1/ws/token?task_id=${taskId}&hostname=${hostname}`, {
+            method: "GET",
+            headers: {"X-API-Key": key.value}
+        }).then(r => r.json())
+            .then(data => {
+                connectWebSocket(data['token'], data.mode, taskId, hostname);
+            }).catch(e => {
+            alert("Failed to get WebSocket token: " + e.message);
+        });
+    }
+
+    function connectWebSocket(token, mode, taskId, hostname) {
+        disconnectStream();
+
+        const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsPort = 8765; // WebSocket port
+        const wsUrl = `${protocol}//${globalThis.location.hostname}:${wsPort}?token=${token}`;
+
+        ws = new WebSocket(wsUrl, 'concierge.v1');
+
+        // CLI mode doesn't need binaryType, JPEG mode does
+        if (mode === 'jpeg_stream') {
+            ws.binaryType = 'arraybuffer';
+        }
+
+        ws.onopen = () => {
+            document.getElementById('streamContainer').classList.add('active');
+            document.getElementById('streamTaskId').textContent = taskId;
+            document.getElementById('streamHostname').textContent = hostname;
+            document.getElementById('streamStatus').textContent = 'Connected';
+            document.getElementById('streamStatus').className = 'stream-status connected';
+
+            if (mode === 'cli') {
+                document.getElementById('cliMode').style.display = 'block';
+                document.getElementById('streamMode').style.display = 'none';
+                // Initialize terminal
+                terminalBuffer = '';
+                cursorPosition = 0;
+                insertMode = false;
+                updateTerminalDisplay();
+                // Focus on terminal
+                setTimeout(() => document.getElementById('terminal').focus(), 100);
+            } else if (mode === 'jpeg_stream') {
+                document.getElementById('cliMode').style.display = 'none';
+                document.getElementById('streamMode').style.display = 'block';
+                streamFrameBuffer = new Uint8Array(0); // Reset frame buffer
+                streamViewerInitialized = false;
+                currentStreamImg = null;
+            }
+        };
+
+        ws.onmessage = async (event) => {
+            if (!event || !event.data) {
+                console.error('Received empty WebSocket event');
+                return;
+            }
+
+            if (mode === 'cli') {
+                await processCliEventData(event.data);
+            } else if (mode === 'jpeg_stream') {
+                processStreamData(event.data);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            document.getElementById('streamStatus').textContent = 'Error';
+            document.getElementById('streamStatus').className = 'stream-status error';
+        };
+
+        ws.onclose = () => {
+            document.getElementById('streamStatus').textContent = 'Disconnected';
+            document.getElementById('streamStatus').className = 'stream-status';
+            ws = null;
+            streamFrameBuffer = new Uint8Array(0);
+
+            // Clean up stream image
+            if (currentStreamImg && currentStreamImg.src && currentStreamImg.src.startsWith('blob:')) {
+                URL.revokeObjectURL(currentStreamImg.src);
+                currentStreamImg = null;
+            }
+        };
+    }
+
+    async function processCliEventData(eventData) {
+        try {
+            let text;
+
+            // Handle different data types
+            if (typeof eventData === 'string') {
+                // Direct string (most common for text frames)
+                text = eventData;
+            } else if (eventData instanceof Blob) {
+                // Blob - convert to text
+                text = await eventData.text();
+            } else if (eventData instanceof ArrayBuffer) {
+                // ArrayBuffer - decode to text
+                text = new TextDecoder().decode(eventData);
+            } else {
+                console.warn(
+                    'Received unexpected data type in CLI mode:',
+                    typeof eventData,
+                    eventData
+                );
+                return;
+            }
+
+            try {
+                const msg = JSON.parse(text);
+                if (msg.type === 'stdout') {
+                    if (msg.data.includes("\b\u001b[K")) {
+                        while (cursorPosition > 0 && msg.data.includes("\b\u001b[K")) {
+                            terminalBuffer = terminalBuffer.substring(0, cursorPosition - 1) + terminalBuffer.substring(cursorPosition);
+                            cursorPosition--;
+                            updateTerminalDisplay();
+                            msg.data = msg.data.replace("\b\u001b[K", "");
+                        }
+                    } else if (msg.data.includes('\u001b[K')) {
+                        while (cursorPosition < terminalBuffer.length && msg.data.includes("\u001b[K")) {
+                            terminalBuffer = terminalBuffer.substring(0, cursorPosition) + terminalBuffer.substring(cursorPosition - 1);
+                            updateTerminalDisplay();
+                            msg.data = msg.data.replace("\u001b[K", "");
+                        }
+                    } else if (msg.data.includes('[C')) {
+                        if (msg.data.includes('\r')) {
+                            cursorPosition = terminalBuffer.lastIndexOf('\n') + msg.data.match(/\[C/g).length + 1;
+                        } else {
+                            while (msg.data.includes('[C') && cursorPosition < terminalBuffer.length) {
+                                cursorPosition++;
+                                msg.data = msg.data.replace("[C", "");
+                            }
+                        }
+                        updateTerminalDisplay();
+                    } else if (msg.data.includes('[D') || msg.data.includes('\b')) {
+                        while (cursorPosition > 0 && (msg.data.includes('[D') || msg.data.includes('\b'))) {
+                            cursorPosition--;
+                            updateTerminalDisplay();
+                            msg.data = msg.data.replace("[D", "").replace("\b", "");
+                        }
+                    } else {
+                        appendToTerminal(msg.data.replaceAll(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ""));
+                    }
+                } else if (msg.type === 'status') {
+                    updateStreamStatus(msg.status);
+                } else if (msg.type === 'connected') {
+                    console.log('WebSocket connection confirmed');
+                }
+            } catch {
+                // Not JSON, treat as plain text output
+                appendToTerminal(text);
+            }
+        } catch (e) {
+            console.error('Failed to process CLI message:', e);
+        }
+    }
+
+    function processStreamData(data) {
+        // Data is an ArrayBuffer with framed binary data
+        // Format: [4 bytes: type length][type string][4 bytes: data length][data]
+
+        if (!(data instanceof ArrayBuffer)) {
+            console.error('Expected ArrayBuffer, got:', typeof data);
+            return;
+        }
+
+        // Append new data to buffer
+        const newData = new Uint8Array(data);
+        const combined = new Uint8Array(streamFrameBuffer.length + newData.length);
+        combined.set(streamFrameBuffer);
+        combined.set(newData, streamFrameBuffer.length);
+        streamFrameBuffer = combined;
+
+        // Try to extract complete frames
+        while (streamFrameBuffer.length >= 8) { // Minimum: 4 bytes type len + 4 bytes data len
+            const view = new DataView(streamFrameBuffer.buffer, streamFrameBuffer.byteOffset);
+
+            // Read type length (4 bytes, big-endian)
+            const typeLen = view.getUint32(0, false);
+
+            // Check if we have enough data for the complete header
+            if (streamFrameBuffer.length < 4 + typeLen + 4) {
+                // Not enough data yet
+                break;
+            }
+
+            // Read content type
+            const typeBytes = streamFrameBuffer.slice(4, 4 + typeLen);
+            const contentType = new TextDecoder().decode(typeBytes);
+
+            // Read data length (4 bytes, big-endian)
+            const dataLen = view.getUint32(4 + typeLen, false);
+
+            // Check if we have the complete frame
+            const totalFrameLen = 4 + typeLen + 4 + dataLen;
+            if (streamFrameBuffer.length < totalFrameLen) {
+                // Not enough data yet
+                break;
+            }
+
+            // Extract frame data
+            const frameData = streamFrameBuffer.slice(4 + typeLen + 4, totalFrameLen);
+
+            // Remove processed frame from buffer
+            streamFrameBuffer = streamFrameBuffer.slice(totalFrameLen);
+
+            // Display the frame
+            displayStreamFrame(frameData, contentType);
+        }
+    }
+
+    function displayStreamFrame(frameData, contentType) {
+        const viewer = document.getElementById('mediaViewer');
+
+        // Create blob from frame data
+        const blob = new Blob([frameData], {type: contentType});
+        const url = URL.createObjectURL(blob);
+
+        if (contentType.startsWith('image/')) {
+            // Initialize viewer on first frame
+            if (!streamViewerInitialized) {
+                viewer.innerHTML = '<img src="" alt="Stream">';
+                currentStreamImg = viewer.querySelector('img');
+                streamViewerInitialized = true;
+            }
+
+            // Preload the new image
+            const newImg = new Image();
+
+            newImg.onload = () => {
+                // Swap the image source directly (no DOM manipulation)
+                if (currentStreamImg) {
+                    const oldUrl = currentStreamImg.src;
+                    currentStreamImg.src = url;
+
+                    // Clean up old URL after a short delay
+                    if (oldUrl && oldUrl.startsWith('blob:')) {
+                        setTimeout(() => URL.revokeObjectURL(oldUrl), 100);
+                    }
+                }
+            };
+
+            newImg.onerror = () => {
+                console.error('Failed to load stream frame');
+                URL.revokeObjectURL(url);
+            };
+
+            // Start loading
+            newImg.src = url;
+
+        } else if (contentType.startsWith('video/')) {
+            // Display video
+            viewer.innerHTML = `<video src="${url}" autoplay controls></video>`;
+            streamViewerInitialized = true;
+        } else {
+            // Unknown type
+            viewer.innerHTML = `<span style="color:var(--muted)">Received ${contentType} (${frameData.length} bytes)</span>`;
+            streamViewerInitialized = true;
+        }
+    }
+
+    function updateTerminalDisplay() {
+        const terminal = document.getElementById('terminal');
+        if (!terminal) return;
+
+        // Split content at cursor position
+        const beforeCursor = terminalBuffer.substring(0, cursorPosition);
+        const afterCursor = terminalBuffer.substring(cursorPosition);
+
+        // Create HTML with cursor
+        terminal.innerHTML = `<span class="terminal-content">${escapeHtml(
+            beforeCursor)}</span><span class="terminal-cursor"></span><span
+class="terminal-content">${escapeHtml(afterCursor)}</span>`;
+
+        // Scroll to bottom
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function appendToTerminal(text) {
+        if (text.length === 0){
+            return;
+        }
+        terminalBuffer += text;
+        cursorPosition = terminalBuffer.length; // this is not compatible with inserts, but += text.length is buggy
+        updateTerminalDisplay();
+    }
+
+    function updateStreamStatus(status) {
+        const statusText = {
+            'success': '✅ Process completed successfully',
+            'error': '❌ Process failed',
+            'running': '🏃 Process running...'
+        }[status] || status;
+        terminalBuffer += `\n[${statusText}]\n`;
+        cursorPosition = terminalBuffer.length;
+        updateTerminalDisplay();
+    }
+
+    function toggleModifier(modifier) {
+        const ctrlBtn = document.getElementById('ctrlBtn');
+        const altBtn = document.getElementById('altBtn');
+        ctrlBtn.classList.remove('active');
+        altBtn.classList.remove('active');
+        if (nextCharModifier === modifier) {
+            nextCharModifier = null;
+        } else {
+            nextCharModifier = modifier;
+            if (modifier === 'ctrl') {
+                ctrlBtn.classList.add('active');
+            } else if (modifier === 'alt') {
+                altBtn.classList.add('active');
+            }
+        }
+        document.getElementById('terminal').focus();
+    }
+
+    function processEscModifier() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        ws.send('\x1B');
+        document.getElementById('terminal').focus();
+    }
+
+    function localEchoPaste(pastedText) {
+        for (const element of pastedText) {
+            const char = element;
+
+            if (char === '\n' || char === '\r') {
+                // Newline
+                terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                    '\n' + terminalBuffer.substring(cursorPosition);
+                cursorPosition++;
+            } else if (char === '\t') {
+                // Tab
+                terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                    '\t' + terminalBuffer.substring(cursorPosition);
+                cursorPosition++;
+            } else if (char.codePointAt(0) >= 32) {
+                // Printable character
+                if (insertMode || cursorPosition >= terminalBuffer.length) {
+                    // Insert mode or at end
+                    terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                        char + terminalBuffer.substring(cursorPosition);
+                } else {
+                    // Overwrite mode
+                    terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                        char + terminalBuffer.substring(cursorPosition + 1);
+                }
+                cursorPosition++;
+            }
+        }
+        updateTerminalDisplay();
+    }
+
+    function handleTerminalPaste(event) {
+        event.preventDefault();
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const pastedText = (event.clipboardData || globalThis.clipboardData).getData('text');
+        if (!pastedText) return;
+        const localEcho = document.getElementById('localEchoCheckbox').checked;
+        ws.send(pastedText);
+        if (localEcho) {
+            localEchoPaste(pastedText);
+        }
+    }
+
+    function processAltModifier(key, localEcho) {
+        // Alt+key: send ESC followed by the key
+        ws.send('\x1B' + key);
+        if (localEcho) {
+            terminalBuffer += `[ALT+${key}]`;
+            cursorPosition = terminalBuffer.length;
+            updateTerminalDisplay();
+        }
+        // Clear modifier
+        nextCharModifier = null;
+        document.getElementById('altBtn').classList.remove('active');
+    }
+
+    function processCtrlModifier(key, localEcho) {
+        const char = key.toUpperCase();
+        if (['C', 'D', 'Z'].includes(char)) {
+            ws.send(JSON.stringify({type: "control", char: char}));
+        } else if (char.length === 1 && char >= 'A' && char <= 'Z') {
+            const charCode = char.codePointAt(0);
+            const ctrlCode = charCode - 64;
+            ws.send(String.fromCodePoint(ctrlCode));
+        }
+        if (localEcho) {
+            terminalBuffer += `^${char}`;
+            cursorPosition = terminalBuffer.length;
+            updateTerminalDisplay();
+        }
+        nextCharModifier = null;
+        document.getElementById('ctrlBtn').classList.remove('active');
+    }
+
+    function processModifier(event, localEcho) {
+        if (nextCharModifier) {
+            const key = event.key;
+            if (nextCharModifier === 'ctrl') {
+                event.preventDefault();
+                processCtrlModifier(key, localEcho);
+            } else if (nextCharModifier === 'alt') {
+                event.preventDefault();
+                processAltModifier(key, localEcho);
+            } else {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    function processCursor(event, localEcho) {
+        // very limited cursor handling
+        const arrowMap = {
+            'ArrowUp': 'A',
+            'ArrowDown': 'B',
+            'ArrowRight': 'C',
+            'ArrowLeft': 'D'
+        }
+        if (['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft'].includes(event.key)) {
+            event.preventDefault();
+            ws.send(`\x1B[${arrowMap[event.key]}`);
+            if (localEcho) {
+                if (event.key === 'ArrowRight' && cursorPosition < terminalBuffer.length) {
+                    cursorPosition++;
+                } else if (event.key === 'ArrowLeft' && cursorPosition > 0) {
+                    cursorPosition--;
+                }
+                updateTerminalDisplay();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    function processAltKey(event, localEcho) {
+        if (event.altKey && !event.ctrlKey && !event.metaKey) {
+            const key = event.key;
+            if (key.length === 1) {
+                event.preventDefault();
+                ws.send('\x1B' + key);
+                if (localEcho) {
+                    terminalBuffer += `[ALT+${key}]`;
+                    cursorPosition = terminalBuffer.length;
+                    updateTerminalDisplay();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function processRegularKey(event, localEcho) {
+        if (event.key.length === 1) {
+            event.preventDefault();
+            ws.send(event.key);
+            if (localEcho) {
+                if (insertMode || cursorPosition >= terminalBuffer.length) {
+                    terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                        event.key + terminalBuffer.substring(cursorPosition);
+                } else {
+                    terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                        event.key + terminalBuffer.substring(cursorPosition + 1);
+                }
+                cursorPosition++;
+                updateTerminalDisplay();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    function processCtrlKeyInner(key, localEcho) {
+        if (key === 'C') {
+            ws.send(JSON.stringify({type: "control", char: "C"}));
+            if (localEcho) {
+                terminalBuffer += '^C';
+                cursorPosition = terminalBuffer.length;
+                updateTerminalDisplay();
+            }
+        } else if (key === 'D') {
+            ws.send(JSON.stringify({type: "control", char: "D"}));
+            if (localEcho) {
+                terminalBuffer += '^D';
+                cursorPosition = terminalBuffer.length;
+                updateTerminalDisplay();
+            }
+        } else if (key === 'Z') {
+            ws.send(JSON.stringify({type: "control", char: "Z"}));
+            if (localEcho) {
+                terminalBuffer += '^Z';
+                cursorPosition = terminalBuffer.length;
+                updateTerminalDisplay();
+            }
+        } else {
+            const charCode = key.codePointAt(0);
+            const ctrlCode = charCode - 64;
+            ws.send(String.fromCodePoint(ctrlCode));
+            if (localEcho) {
+                terminalBuffer += `^${key}`;
+                cursorPosition = terminalBuffer.length;
+                updateTerminalDisplay();
+            }
+        }
+    }
+
+    function processCtrlKey(event, localEcho) {
+        if (event.ctrlKey && !event.altKey && !event.metaKey) {
+            const key = event.key.toUpperCase();
+            // Allow Ctrl+V for paste
+            if (key === 'V') {
+                // Let the paste event handler take care of it
+                return true;
+            }
+            if (key.length === 1 && key >= 'A' && key <= 'Z') {
+                event.preventDefault();
+                processCtrlKeyInner(key, localEcho);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function processEscKey(event) {
+        event.preventDefault();
+        const escBtn = document.getElementById('escBtn');
+        escBtn.classList.add('active');
+        setTimeout(() => escBtn.classList.remove('active'), 200);
+        processEscModifier();
+    }
+
+    function processInsertKey(event) {
+        event.preventDefault();
+        insertMode = !insertMode;
+        ws.send('\x1B[2~');
+    }
+
+    function processDeleteKey(event, localEcho) {
+        event.preventDefault();
+        ws.send('\x1B[3~');
+        if (localEcho) {
+            if (cursorPosition < terminalBuffer.length) {
+                terminalBuffer = terminalBuffer.substring(0, cursorPosition) +
+                    terminalBuffer.substring(cursorPosition + 1);
+                updateTerminalDisplay();
+            }
+        }
+    }
+
+    function processHomeKey(event) {
+        event.preventDefault();
+        ws.send('\x1B[7~');
+    }
+
+    function processEndKey(event) {
+        event.preventDefault();
+        ws.send('\x1B[8~');
+    }
+
+    function processEnterKey(event, localEcho) {
+        event.preventDefault();
+        ws.send('\n');
+        if (localEcho) {
+            terminalBuffer = terminalBuffer.substring(0, cursorPosition) + '\n' +
+                terminalBuffer.substring(cursorPosition);
+            cursorPosition++;
+            updateTerminalDisplay();
+        }
+    }
+
+    function processTabKey(event, localEcho) {
+        event.preventDefault();
+        ws.send('\t');
+        if (localEcho) {
+            terminalBuffer = terminalBuffer.substring(0, cursorPosition) + '\t' +
+                terminalBuffer.substring(cursorPosition);
+            cursorPosition++;
+            updateTerminalDisplay();
+        }
+    }
+
+    function processBackspaceKey(event, localEcho) {
+        event.preventDefault();
+        ws.send('\b');
+        if (localEcho) {
+            terminalBuffer = terminalBuffer.substring(0, cursorPosition-1) + terminalBuffer.substring(cursorPosition);
+            cursorPosition--;
+            updateTerminalDisplay();
+        }
+    }
+
+    function handleTerminalKeydown(event) {
+        // Very rudimentary and incomplete implementation of some VT100 codes
+        // for partial terminal emulation
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const localEcho = document.getElementById('localEchoCheckbox').checked;
+        if (event.key === 'Escape') {
+            processEscKey(event);
+        } else if (event.key === 'Insert') {
+            processInsertKey(event);
+        } else if (event.key === 'Delete') {
+            processDeleteKey(event, localEcho);
+        } else if (event.key === 'Home') {
+            processHomeKey(event);
+        } else if (event.key === 'End') {
+            processEndKey(event);
+        } else if (event.key === 'Backspace') {
+            processBackspaceKey(event, localEcho);
+        } else if (event.key === 'Enter') {
+            processEnterKey(event, localEcho);
+        } else if (event.key === 'Tab') {
+            processTabKey(event, localEcho);
+        } else if (processCursor(event, localEcho)) {
+            // return;
+        } else if (processModifier(event, localEcho)) {
+            // return;
+        } else if (processCtrlKey(event, localEcho)) {
+            // return;
+        } else if (processAltKey(event, localEcho)) {
+            // return;
+        } else if (processRegularKey(event, localEcho)) {
+            // return;
+        } else {
+            console.error(`Couldn't handle event key ${event.key}`);
+        }
+    }
+
+    function disconnectStream() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+        document.getElementById('streamContainer').classList.remove('active');
+
+        // Clear terminal state
+        terminalBuffer = '';
+        cursorPosition = 0;
+        insertMode = false;
+        const terminal = document.getElementById('terminal');
+        if (terminal) terminal.innerHTML = '';
+
+        nextCharModifier = null;
+        streamFrameBuffer = new Uint8Array(0);
+        streamViewerInitialized = false;
+
+        // Clean up stream image
+        if (currentStreamImg && currentStreamImg.src && currentStreamImg.src.startsWith('blob:')) {
+            URL.revokeObjectURL(currentStreamImg.src);
+            currentStreamImg = null;
+        }
+
+        document.getElementById('ctrlBtn')?.classList.remove('active');
+        document.getElementById('altBtn')?.classList.remove('active');
+        selectedStreamHost = null;
+        loadTaskHistory();
+    }
+
+    function abortTask(taskId) {
+        if (!confirm("Abort this task? This will terminate all running processes.")) {
+            return;
+        }
+
+        fetch(`/concierge/api/v1/tasks/${taskId}/abort`, {
             method: "PUT",
             headers: {"X-API-Key": key.value}
         }).then(r => {
             if (!r.ok) throw new Error("Failed to abort task");
             return r.json();
         }).then(res => {
-            alert(`Task abort initiated\nProcesses terminated: ${res.aborted_processes}`);
-            setTimeout(() => refreshLastTask(), 1000);
+            alert(`Task abort initiated\nProcesses terminated: ${res['aborted_processes']}`);
+            setTimeout(() => refreshTask(taskId), 1000);
         }).catch(e => {
             alert("Failed to abort task: " + e.message);
             console.error(e);
         });
     }
 
-    updateTaskButtons();
+    renderTaskHistory();
+    updateParamsUI();
 </script>
 </body>
 </html>

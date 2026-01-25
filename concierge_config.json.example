@@ -1,0 +1,159 @@
+{
+  "hosts": [
+    {
+      "hostname": "localhost",
+      "mac": "11:22:33:44:55:66",
+      "commands": [
+        {
+          "name": "status",
+          "type": "shell",
+          "command": "ping",
+          "arguments": ["-c1", "<hostname>"],
+          "timeout": 30
+        },
+        {
+          "name": "suspend",
+          "type": "shell",
+          "command": "ssh",
+          "arguments": ["<hostname>", "sudo pm-suspend"],
+          "async_timeout": 120
+        },
+        {
+          "name": "api_health",
+          "type": "http",
+          "method": "GET",
+          "url": "https://<hostname>/api/health",
+          "headers": [
+            {"key": "User-Agent", "value": "Concierge/1.0"}
+          ],
+          "skip_cert_validation": false,
+          "timeout": 10
+        },
+        {
+          "name": "deploy_safe",
+          "type": "http",
+          "method": "POST",
+          "url": "https://<hostname>/api/deploy",
+          "headers": [
+            {"key": "Content-Type", "value": "application/json"},
+            {"key": "Authorization", "value": "Bearer <token>"}
+          ],
+          "query_params": {
+            "env": "<environment>",
+            "version": "<version>"
+          },
+          "payload": "{\"action\": \"deploy\", \"service\": <string_service>, \"replicas\": <number_replicas>, \"config\": <json_config>}",
+          "payload_placeholder_replacement": "json_only",
+          "async_timeout": 300
+        },{
+          "name": "webcam",
+          "type": "shell",
+          "command": "ffmpeg",
+          "arguments": ["-i", "/dev/video0", "-f", "mjpeg", "-"],
+          "async_timeout": -1,
+          "socket_raw_mode": "jpeg_stream",
+          "socket_raw_stdin": false
+        },{
+          "name": "interactive_shell",
+          "type": "shell",
+          "command": "/bin/sh",
+          "arguments": ["-i"],
+          "async_timeout": -1,
+          "socket_raw_mode": "cli",
+          "socket_raw_stdin": true
+        }
+      ]
+    },
+    {
+      "hostname": "server01",
+      "mac": "aa:bb:cc:dd:ee:ff",
+      "commands": [
+        {
+          "name": "status",
+          "type": "shell",
+          "command": "ping",
+          "arguments": ["-c1", "<hostname>"],
+          "timeout": 30
+        },
+        {
+          "name": "restart_service",
+          "type": "http",
+          "method": "POST",
+          "url": "http://<hostname>:8080/services/<service>/restart",
+          "headers": [
+            {"key": "X-API-Key", "value": "<api_key>"}
+          ],
+          "path_params": {
+            "service": "<service>"
+          },
+          "async_timeout": 60
+        }
+      ]
+    }
+  ],
+  "execution_plans": [
+    {
+      "name": "rolling_deploy",
+      "referenced_plans": [],
+      "tasks": [
+        {
+          "command": "status",
+          "hostnames": ["localhost", "server01"],
+          "params": {},
+          "execute_after": null,
+          "if_previous_command": null
+        },
+        {
+          "command": "deploy_safe",
+          "hostnames": ["localhost"],
+          "params": {
+            "token": "secret123",
+            "environment": "prod",
+            "version": "2.0",
+            "service": "api-gateway",
+            "replicas": "3",
+            "config": "{\"timeout\": 30}"
+          },
+          "execute_after": "0",
+          "if_previous_command": "0",
+          "if_previous_command_result": "all_success"
+        },
+        {
+          "command": "deploy_safe",
+          "hostnames": ["server01"],
+          "params": {
+            "token": "secret123",
+            "environment": "prod",
+            "version": "2.0",
+            "service": "api-gateway",
+            "replicas": "2",
+            "config": "{\"timeout\": 30}"
+          },
+          "execute_after": "1",
+          "if_previous_command": "1",
+          "if_previous_command_result": "all_success"
+        }
+      ]
+    },
+    {
+      "name": "health_check_sequence",
+      "referenced_plans": [],
+      "tasks": [
+        {
+          "command": "api_health",
+          "hostnames": ["localhost"],
+          "params": {},
+          "execute_after": null
+        },
+        {
+          "command": "status",
+          "hostnames": ["server01"],
+          "params": {},
+          "execute_after": "0",
+          "if_previous_command": "0",
+          "if_previous_output_contains": "healthy"
+        }
+      ]
+    }
+  ]
+}
