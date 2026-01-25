@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 import sys
 import os
-import base64
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/concierge_acpi')
 
@@ -24,7 +23,7 @@ class TestHTTPProcess(unittest.TestCase):
             "start_timestamp": 1234567890
         }
 
-    @patch('concierge_acpi.HTTPSConnection')
+    @patch('http.client.HTTPSConnection')
     def test_abort_before_execution(self, mock_conn_class):
         config = {
             "method": "GET",
@@ -39,7 +38,7 @@ class TestHTTPProcess(unittest.TestCase):
         # Should not make any requests
         mock_conn_class.assert_not_called()
 
-    @patch('concierge_acpi.HTTPSConnection')
+    @patch('http.client.HTTPSConnection')
     def test_payload_replacement_invalid_mode(self, mock_conn_class):
         mock_conn = MagicMock()
         mock_conn_class.return_value = mock_conn
@@ -60,7 +59,7 @@ class TestHTTPProcess(unittest.TestCase):
         self.assertEqual(len(task["errors"]), 1)
         self.assertIn("Unknown payload_placeholder_replacement mode", task["errors"][0]["error"])
 
-    @patch('concierge_acpi.HTTPSConnection')
+    @patch('http.client.HTTPSConnection')
     def test_payload_replacement_json_only_invalid_json(self, mock_conn_class):
         mock_conn = MagicMock()
         mock_conn_class.return_value = mock_conn
@@ -81,7 +80,7 @@ class TestHTTPProcess(unittest.TestCase):
         self.assertEqual(len(task["errors"]), 1)
         self.assertIn("not valid JSON", task["errors"][0]["error"])
 
-    @patch('concierge_acpi.HTTPSConnection')
+    @patch('http.client.HTTPSConnection')
     @patch('threading.Thread')
     def test_run_async(self, mock_thread, mock_conn_class):
         mock_conn = MagicMock()
@@ -106,7 +105,7 @@ class TestHTTPProcess(unittest.TestCase):
         mock_thread.assert_called_once()
         mock_thread_instance.start.assert_called_once()
 
-    @patch('concierge_acpi.HTTPSConnection')
+    @patch('http.client.HTTPSConnection')
     def test_update_tasks_when_aborted(self, mock_conn_class):
         config = {
             "method": "GET",

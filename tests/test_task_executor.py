@@ -72,7 +72,7 @@ class TestTaskExecutor(unittest.TestCase):
         task = self.db[task_id]
         self.assertIsNone(task["command"])
 
-    @patch('concierge_acpi.send_wol')
+    @patch('test_utils.send_wol')
     def test_execute_task_calls_log_callback(self, mock_send_wol):
         entries = {
             "server1": ({"mac": "11:22:33:44:55:66"}, -1, False)
