@@ -1,1 +1,9 @@
+.idea
 /concierge_config.json
+/concierge-acpi.py
+concierge_tasks
+*.pem
+*.txt
+*_metadata.json
+*.out
+*_fail.py
