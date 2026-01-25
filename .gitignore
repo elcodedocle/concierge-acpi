@@ -7,3 +7,4 @@ concierge_tasks
 *_metadata.json
 *.out
 *_fail.py
+/.coverage
